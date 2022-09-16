@@ -21,7 +21,7 @@ on:
 
 env:
   # please change to your own config.
-  RUN_TYPE: strava # support strava/nike/garmin/garmin_cn/keep/only_gpx/nike_to_strava/strava_to_garmin/strava_to_garmin_cn/garmin_to_strava/garmin_to_strava_cn, Please change the 'pass' it to your own
+  RUN_TYPE: codoon # support strava/nike/garmin/garmin_cn/keep/only_gpx/nike_to_strava/strava_to_garmin/strava_to_garmin_cn/garmin_to_strava/garmin_to_strava_cn, Please change the 'pass' it to your own
   ATHLETE: 周观云
   TITLE: 周观云的跑步轨迹
   MIN_GRID_DISTANCE: 10 # change min distance here
@@ -115,7 +115,12 @@ jobs:
         if: env.RUN_TYPE == 'garmin_to_strava'
         run: |
           python scripts/garmin_to_strava_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GRAMIN_EMAIL }} ${{ secrets.GARMIN_PASSWORD }}
-
+          
+      - name: Run sync codoon script
+        if: env.RUN_TYPE == 'codoon'
+        run: |
+          python scripts/codoon_sync.py ${{ secrets.CoDooN_MOBILE }} ${{ secrets.CoDooN__PASSWORD }}
+          
       - name: Make svg GitHub profile
         if: env.RUN_TYPE != 'pass'
         run: |
