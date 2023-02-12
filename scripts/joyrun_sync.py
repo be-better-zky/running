@@ -48,9 +48,8 @@ class JoyrunAuth:
         if not uid:  # uid == 0 or ''
             uid = sid = ""
         pre_string = "{params_string}{salt}{uid}{sid}".format(
-            params_string="".join(
-                "".join((k, str(v))) for k, v in sorted(params.items())
-            ),
+            params_string="".join("".join((k, str(v)))
+                                  for k, v in sorted(params.items())),
             salt=salt,
             uid=str(uid),
             sid=sid,
@@ -59,11 +58,13 @@ class JoyrunAuth:
 
     @classmethod
     def get_signature_v1(cls, params, uid=0, sid=""):
-        return cls.__get_signature(params, uid, sid, "1fd6e28fd158406995f77727b35bf20a")
+        return cls.__get_signature(params, uid, sid,
+                                   "1fd6e28fd158406995f77727b35bf20a")
 
     @classmethod
     def get_signature_v2(cls, params, uid=0, sid=""):
-        return cls.__get_signature(params, uid, sid, "0C077B1E70F5FDDE6F497C1315687F9C")
+        return cls.__get_signature(params, uid, sid,
+                                   "0C077B1E70F5FDDE6F497C1315687F9C")
 
     def __call__(self, r):
         params = self.params.copy()
@@ -75,9 +76,11 @@ class JoyrunAuth:
         r.headers["_sign"] = signV2
 
         if r.method == "GET":
-            r.prepare_url(
-                r.url, params={"signature": signV1, "timestamp": params["timestamp"]}
-            )
+            r.prepare_url(r.url,
+                          params={
+                              "signature": signV1,
+                              "timestamp": params["timestamp"]
+                          })
         elif r.method == "POST":
             params["signature"] = signV1
             r.prepare_body(data=params, files=None)
@@ -131,7 +134,8 @@ class Joyrun:
         self.session.headers.update({"ypcookie": loginCookie})
         self.session.cookies.clear()
         self.session.cookies.set("ypcookie", quote(loginCookie).lower())
-        self.session.headers.update(self.device_info_headers)  # 更新设备信息中的 uid 字段
+        self.session.headers.update(
+            self.device_info_headers)  # 更新设备信息中的 uid 字段
 
     def login_by_phone(self):
         params = {
@@ -190,15 +194,14 @@ class Joyrun:
             }
             i += 1
             points_dict_list.append(points_dict)
-        points_dict_list.append(
-            {
-                "latitude": run_points_data[-1][0],
-                "longitude": run_points_data[-1][1],
-                "time": datetime.utcfromtimestamp(end_time),
-            }
-        )
+        points_dict_list.append({
+            "latitude": run_points_data[-1][0],
+            "longitude": run_points_data[-1][1],
+            "time": datetime.utcfromtimestamp(end_time),
+        })
         gpx = gpxpy.gpx.GPX()
-        gpx.nsmap["gpxtpx"] = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
+        gpx.nsmap[
+            "gpxtpx"] = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
         gpx_track = gpxpy.gpx.GPXTrack()
         gpx_track.name = "gpx from joyrun"
         gpx.tracks.append(gpx_track)
@@ -225,7 +228,10 @@ class Joyrun:
         data = r.json()
         return data
 
-    def parse_raw_data_to_nametuple(self, run_data, old_gpx_ids, with_gpx=False):
+    def parse_raw_data_to_nametuple(self,
+                                    run_data,
+                                    old_gpx_ids,
+                                    with_gpx=False):
         run_data = run_data["runrecord"]
         joyrun_id = run_data["fid"]
 
@@ -235,11 +241,11 @@ class Joyrun:
         if with_gpx:
             # pass the track no points
             if run_points_data:
-                gpx_data = self.parse_points_to_gpx(
-                    run_points_data, start_time, end_time
-                )
+                gpx_data = self.parse_points_to_gpx(run_points_data,
+                                                    start_time, end_time)
                 download_joyrun_gpx(gpx_data, str(joyrun_id))
-        heart_rate_list = eval(run_data["heartrate"]) if run_data["heartrate"] else None
+        heart_rate_list = eval(
+            run_data["heartrate"]) if run_data["heartrate"] else None
         heart_rate = None
         if heart_rate_list:
             heart_rate = int(sum(heart_rate_list) / len(heart_rate_list))
@@ -247,8 +253,10 @@ class Joyrun:
             if heart_rate < 0:
                 heart_rate = None
 
-        polyline_str = polyline.encode(run_points_data) if run_points_data else ""
-        start_latlng = start_point(*run_points_data[0]) if run_points_data else None
+        polyline_str = polyline.encode(
+            run_points_data) if run_points_data else ""
+        start_latlng = start_point(
+            *run_points_data[0]) if run_points_data else None
         start_date = datetime.utcfromtimestamp(start_time)
         start_date_local = adjust_time(start_date, BASE_TIMEZONE)
         end = datetime.utcfromtimestamp(end_time)
@@ -259,27 +267,40 @@ class Joyrun:
         # if run_data["city"] or run_data["province"]:
         #     location_country = str(run_data["city"]) + " " + str(run_data["province"])
         d = {
-            "id": int(joyrun_id),
-            "name": "run from joyrun",
+            "id":
+            int(joyrun_id),
+            "name":
+            "run from joyrun",
             # future to support others workout now only for run
-            "type": "Run",
-            "start_date": datetime.strftime(start_date, "%Y-%m-%d %H:%M:%S"),
-            "end": datetime.strftime(end, "%Y-%m-%d %H:%M:%S"),
-            "start_date_local": datetime.strftime(
-                start_date_local, "%Y-%m-%d %H:%M:%S"
-            ),
-            "end_local": datetime.strftime(end_local, "%Y-%m-%d %H:%M:%S"),
-            "length": run_data["meter"],
-            "average_heartrate": heart_rate,
-            "map": run_map(polyline_str),
-            "start_latlng": start_latlng,
-            "distance": run_data["meter"],
-            "moving_time": timedelta(seconds=run_data["second"]),
-            "elapsed_time": timedelta(
-                seconds=int((run_data["endtime"] - run_data["starttime"]))
-            ),
-            "average_speed": run_data["meter"] / run_data["second"],
-            "location_country": location_country,
+            "type":
+            "Run",
+            "start_date":
+            datetime.strftime(start_date, "%Y-%m-%d %H:%M:%S"),
+            "end":
+            datetime.strftime(end, "%Y-%m-%d %H:%M:%S"),
+            "start_date_local":
+            datetime.strftime(start_date_local, "%Y-%m-%d %H:%M:%S"),
+            "end_local":
+            datetime.strftime(end_local, "%Y-%m-%d %H:%M:%S"),
+            "length":
+            run_data["meter"],
+            "average_heartrate":
+            heart_rate,
+            "map":
+            run_map(polyline_str),
+            "start_latlng":
+            start_latlng,
+            "distance":
+            run_data["meter"],
+            "moving_time":
+            timedelta(seconds=run_data["second"]),
+            "elapsed_time":
+            timedelta(seconds=int((run_data["endtime"] -
+                                   run_data["starttime"]))),
+            "average_speed":
+            run_data["meter"] / run_data["second"],
+            "location_country":
+            location_country,
         }
         return namedtuple("x", d.keys())(*d.values())
 
@@ -288,22 +309,25 @@ class Joyrun:
         old_tracks_ids = [int(i) for i in old_tracks_ids if i.isdigit()]
 
         old_gpx_ids = os.listdir(GPX_FOLDER)
-        old_gpx_ids = [i.split(".")[0] for i in old_gpx_ids if not i.startswith(".")]
+        old_gpx_ids = [
+            i.split(".")[0] for i in old_gpx_ids if not i.startswith(".")
+        ]
         new_run_ids = list(set(run_ids) - set(old_tracks_ids))
         tracks = []
         for i in new_run_ids:
             run_data = self.get_single_run_record(i)
-            track = self.parse_raw_data_to_nametuple(run_data, old_gpx_ids, with_gpx)
+            track = self.parse_raw_data_to_nametuple(run_data, old_gpx_ids,
+                                                     with_gpx)
             tracks.append(track)
         return tracks
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("phone_number_or_uid", help="joyrun phone number or uid")
-    parser.add_argument(
-        "identifying_code_or_sid", help="joyrun identifying_code from sms or sid"
-    )
+    parser.add_argument("phone_number_or_uid",
+                        help="joyrun phone number or uid")
+    parser.add_argument("identifying_code_or_sid",
+                        help="joyrun identifying_code from sms or sid")
     parser.add_argument(
         "--with-gpx",
         dest="with_gpx",

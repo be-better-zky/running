@@ -20,7 +20,6 @@ class GridDrawer(TracksDrawer):
     Methods:
         draw: For each track, draw it on the poster.
     """
-
     def __init__(self, the_poster: Poster):
         super().__init__(the_poster)
 
@@ -32,18 +31,17 @@ class GridDrawer(TracksDrawer):
         if cell_size is None or counts is None:
             raise PosterError("Unable to compute grid.")
         count_x, count_y = counts[0], counts[1]
-        spacing_x = (
-            0 if count_x <= 1 else (size.x - cell_size * count_x) / (count_x - 1)
-        )
-        spacing_y = (
-            0 if count_y <= 1 else (size.y - cell_size * count_y) / (count_y - 1)
-        )
-        offset.x += (size.x - count_x * cell_size - (count_x - 1) * spacing_x) / 2
-        offset.y += (size.y - count_y * cell_size - (count_y - 1) * spacing_y) / 2
+        spacing_x = (0 if count_x <= 1 else
+                     (size.x - cell_size * count_x) / (count_x - 1))
+        spacing_y = (0 if count_y <= 1 else
+                     (size.y - cell_size * count_y) / (count_y - 1))
+        offset.x += (size.x - count_x * cell_size -
+                     (count_x - 1) * spacing_x) / 2
+        offset.y += (size.y - count_y * cell_size -
+                     (count_y - 1) * spacing_y) / 2
         for (index, tr) in enumerate(self.poster.tracks[::-1]):
             p = XY(index % count_x, index // count_x) * XY(
-                cell_size + spacing_x, cell_size + spacing_y
-            )
+                cell_size + spacing_x, cell_size + spacing_y)
             self._draw_track(
                 dr,
                 tr,
@@ -51,7 +49,8 @@ class GridDrawer(TracksDrawer):
                 offset + 0.05 * XY(cell_size, cell_size) + p,
             )
 
-    def _draw_track(self, dr: svgwrite.Drawing, tr: Track, size: XY, offset: XY):
+    def _draw_track(self, dr: svgwrite.Drawing, tr: Track, size: XY,
+                    offset: XY):
         color = self.color(self.poster.length_range, tr.length, tr.special)
 
         str_length = format_float(self.poster.m2u(tr.length))
@@ -62,11 +61,11 @@ class GridDrawer(TracksDrawer):
             distance1 = self.poster.special_distance["special_distance"]
             distance2 = self.poster.special_distance["special_distance2"]
             has_special = distance1 < tr.length / 1000 < distance2
-            color = self.color(self.poster.length_range_by_date, tr.length, has_special)
+            color = self.color(self.poster.length_range_by_date, tr.length,
+                               has_special)
             if tr.length / 1000 >= distance2:
-                color = self.poster.colors.get("special2") or self.poster.colors.get(
-                    "special"
-                )
+                color = self.poster.colors.get(
+                    "special2") or self.poster.colors.get("special")
             polyline = dr.polyline(
                 points=line,
                 stroke=color,
