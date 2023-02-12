@@ -47,7 +47,7 @@ jobs:
         run: |
           echo "::set-output name=PY::$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')"
           echo "::set-output name=PIP_CACHE::$(pip cache dir)"
-
+          
       - name: Cache PIP
         uses: actions/cache@v2
         with:
@@ -55,8 +55,8 @@ jobs:
           key: Ubuntu-pip-${{ steps.set_variables.outputs.PY }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install pip==18.1
+          pip install -r requirements.txt 
         if: steps.pip-cache.outputs.cache-hit != 'true'
 
       - name: Run sync Nike script
@@ -115,7 +115,12 @@ jobs:
         if: env.RUN_TYPE == 'garmin_to_strava'
         run: |
           python scripts/garmin_to_strava_sync.py ${{ secrets.STRAVA_CLIENT_ID }} ${{ secrets.STRAVA_CLIENT_SECRET }} ${{ secrets.STRAVA_CLIENT_REFRESH_TOKEN }}  ${{ secrets.GRAMIN_EMAIL }} ${{ secrets.GARMIN_PASSWORD }}
-
+          
+      - name: Run sync codoon script
+        if: env.RUN_TYPE == 'codoon'
+        run: |
+          python scripts/codoon_sync.py ${{ secrets.CoDooN_MOBILE }} ${{ secrets.CoDooN__PASSWORD }}
+          
       - name: Make svg GitHub profile
         if: env.RUN_TYPE != 'pass'
         run: |
